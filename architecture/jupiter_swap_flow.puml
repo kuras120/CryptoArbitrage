@@ -1,0 +1,24 @@
+@startuml JupiterSwapFlow
+skinparam monochrome true
+skinparam defaultFontName Courier
+skinparam shadowing false
+
+actor "Strategy Service" as Client
+participant "Jupiter SDK Layer\n(reqwest + signer)" as SDK
+participant "Jupiter Swap API\nhttps://api.jup.ag/swap/v2" as API
+participant "Solana RPC" as RPC
+participant "Solana Validators" as Chain
+
+Client -> SDK : Build quote params\n(SOL -> USDC amount)
+SDK -> API : GET /order?inputMint=SOL&outputMint=USDC&amount
+API --> SDK : Order tx + requestId
+SDK -> SDK : Sign transaction\n(using SOL keypair)
+SDK -> API : POST /execute\n(signedTransaction, requestId)
+API -> RPC : Forward tx + priority fees
+RPC -> Chain : Land transaction
+Chain --> RPC : Confirmation + signature
+RPC --> API : Finalized result
+API --> SDK : ExecuteResponse (status, signature)
+SDK --> Client : Notify swap result / failure handling
+
+@enduml
