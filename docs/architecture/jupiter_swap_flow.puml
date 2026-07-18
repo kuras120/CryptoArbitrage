@@ -1,0 +1,29 @@
+@startuml JupiterQuoteFlow
+title Current Jupiter quote-only flow
+
+skinparam monochrome true
+skinparam defaultFontName Courier
+skinparam shadowing false
+
+actor "Runtime" as Runtime
+participant "Jupiter module" as Jupiter
+participant "Jupiter Lite API" as API
+
+Runtime -> Jupiter : run() (currently disabled in main)
+Jupiter -> Jupiter : Build SOL -> USDC quote URL\namount = 1 SOL in lamports
+Jupiter -> API : GET /swap/v1/quote
+API --> Jupiter : Quote JSON or HTTP error
+
+alt successful JSON
+  Jupiter -> Jupiter : Deserialize SwapOrder
+  Jupiter -> Runtime : Print formatted quote
+else request or parsing failure
+  Jupiter -> Runtime : Print diagnostic error
+end
+
+note over Jupiter, API
+Transaction building, signing, simulation,
+and swap execution are not implemented.
+end note
+
+@enduml
