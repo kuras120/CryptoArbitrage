@@ -1,5 +1,9 @@
-mod jupiter;
 mod binance;
+#[expect(
+    dead_code,
+    reason = "the Jupiter integration is not wired into the runtime yet"
+)]
+mod jupiter;
 
 #[tokio::main]
 async fn main() {
