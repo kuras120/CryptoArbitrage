@@ -15,7 +15,7 @@ Jupiter -> API : GET /swap/v1/quote
 API --> Jupiter : Quote JSON or HTTP error
 
 alt successful JSON
-  Jupiter -> Jupiter : Deserialize SwapOrder
+  Jupiter -> Jupiter : Deserialize QuoteResponse
   Jupiter -> Runtime : Print formatted quote
 else request or parsing failure
   Jupiter -> Runtime : Print diagnostic error

@@ -33,10 +33,10 @@ The current executable selects the Binance runner and points it at Binance Spot 
 
 ### Current Verification Baseline
 
-- `cargo test --all-targets` passes, but the repository currently contains no automated tests.
-- `cargo build --release` passes with warnings about unused prototype code.
-- `./scripts/verify.sh` currently stops at `cargo fmt -- --check` because the existing Rust source is not rustfmt-clean.
-- Strict Clippy also reports unused prototype surfaces and two style lints. Keep the gate strict; resolve this baseline as a focused code-quality change instead of weakening verification.
+- `cargo test --all-targets` runs the Jupiter quote fixture test and passes.
+- `cargo build --release` passes.
+- `./scripts/verify.sh` passes formatting, strict Clippy, tests, and the release build.
+- Intentional prototype surfaces use narrow, reasoned lint expectations; do not weaken the repository-wide Clippy gate.
 
 ## Production Module: Runtime Entry
 
@@ -71,11 +71,12 @@ The current executable selects the Binance runner and points it at Binance Spot 
 ### Runtime Flow
 
 1. Build an authenticated Binance client.
-2. Fetch account information and check `can_trade`.
-3. Request 100 levels of depth for the configured symbol.
-4. Parse prices and quantities into `Decimal` values.
-5. Select the best eligible opposing quote and clamp the requested quantity.
-6. Submit a LIMIT FOK order at the selected price.
+2. Fetch account information and stop with a contextual error if transport, response-body, or deserialization handling fails.
+3. Check `can_trade` and stop when trading is disabled for the account.
+4. Request 100 levels of depth for the configured symbol.
+5. Parse prices and quantities into `Decimal` values.
+6. Select the best eligible opposing quote and clamp the requested quantity.
+7. Submit a LIMIT FOK order at the selected price.
 
 See the [Binance Spot flow](../architecture/binance_spot_flow.puml).
 
@@ -96,7 +97,7 @@ See the [Binance Spot flow](../architecture/binance_spot_flow.puml).
 ### Outstanding Work
 
 - Remove hard-coded credentials and trading parameters.
-- Replace `unwrap()` calls with contextual error propagation.
+- Replace the remaining market-data and order-submission `unwrap()` calls with contextual error propagation.
 - Validate exchange filters such as lot size, tick size, and minimum notional.
 - Add fill tracking, retries with bounded backoff, and stale-order handling.
 - Add unit and integration tests.
