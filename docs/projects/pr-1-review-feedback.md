@@ -2,7 +2,7 @@
 
 ## Status
 
-- Phase: IMPLEMENTED
+- Phase: APPROVED FOR DOCUMENTATION
 
 ## Problem And Intended Outcome
 
@@ -96,8 +96,8 @@ This avoids lint expectations but substantially broadens the review fix and coul
 4. [done] Apply rustfmt, fix actionable Clippy findings, and document intentional prototype lint expectations locally.
 5. [done] Run the complete repository verification script and inspect the final diff for scope and safety.
 6. [done] Present the implementation and verification summary for owner review.
-7. [pending] Record explicit owner implementation acceptance and set the phase to `APPROVED FOR DOCUMENTATION`.
-8. [pending] Complete permanent documentation and project cleanup required by the accepted implementation.
+7. [done] Record explicit owner implementation acceptance and set the phase to `APPROVED FOR DOCUMENTATION`.
+8. [in-progress] Complete permanent documentation and project cleanup required by the accepted implementation.
 9. [pending] Push the accepted change set and reply to each PR review thread with change and verification details.
 10. [pending] Resolve addressed threads after posting implementation and verification evidence.
 
@@ -134,4 +134,5 @@ Use `[pending]`, `[in-progress]`, or `[done]` so interrupted work remains resuma
 - Kept strict Clippy enforcement, formatted the Rust sources, fixed actionable lint findings, and documented intentional prototype dead code locally.
 - `./scripts/verify.sh` passes: formatting, strict Clippy, one automated test, and the release build.
 - No exchange workflow was executed during verification.
-- Awaiting owner implementation review. Nothing has been pushed and no PR review thread has been replied to or resolved.
+- The owner accepted the implementation on 2026-07-18 and authorized documentation and cleanup.
+- The implementation commit is present on the PR branch. Review thread replies and resolution remain pending closeout.
