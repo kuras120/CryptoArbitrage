@@ -14,6 +14,7 @@ Use this file first to identify the required repository context. Read every docu
 
 | Path | Responsibility |
 | --- | --- |
+| `README.md` | Visitor-facing project purpose, maturity, safety-critical quick start, and links to core documentation; not an index of research notes or active plans. |
 | `src/main.rs` | Runtime entry point and top-level workflow selection. |
 | `src/binance.rs`, `src/binance/**` | Binance Spot integration, account data, order books, and order management. |
 | `src/jupiter.rs`, `src/jupiter/**` | Jupiter quote integration and response models. |
