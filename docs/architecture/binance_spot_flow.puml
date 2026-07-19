@@ -1,0 +1,39 @@
+@startuml BinanceSpotFlow
+title Current Binance Spot Testnet flow
+
+skinparam monochrome true
+skinparam defaultFontName Courier
+skinparam shadowing false
+
+actor "Runtime" as Runtime
+participant "Binance module" as Binance
+participant "Spot Testnet REST API" as API
+participant "Account" as Account
+participant "Order Book" as Book
+participant "Matching Engine" as Engine
+
+Runtime -> Binance : run()
+Binance -> API : Signed GET account
+API -> Account : Load permissions and balances
+Account --> API : Account state
+API --> Binance : Account response
+
+alt transport, body, or parsing failure
+  Binance -> Runtime : Log contextual error and stop
+else valid account and can_trade
+  Binance -> Binance : Deserialize AccountInfo
+  Binance -> API : GET depth (BTCUSDT, 100 levels)
+  API -> Book : Load bids and asks
+  Book --> API : Depth snapshot
+  API --> Binance : OrderBook JSON
+  Binance -> Binance : Parse Decimal values\nfilter and select best quote
+  Binance -> API : Signed LIMIT FOK order
+  API -> Engine : Match immediately or cancel
+  Engine --> API : Order result
+  API --> Binance : JSON response
+else valid account but trading disabled
+  Binance -> Binance : Deserialize AccountInfo
+  Binance -> Binance : Log and stop
+end
+
+@enduml
