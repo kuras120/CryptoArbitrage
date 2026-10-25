@@ -1,55 +1,27 @@
 # Binance Integration Domain
 
-This document defines the language, responsibilities, and invariants of the Binance Spot integration.
+Owns Binance Spot authentication, transport, account state, depth, symbol constraints, and orders. Profitability, inventory targets, and cross-venue coordination belong to the [arbitrage domain](arbitrage-domain.md).
 
-## Purpose
+Current support is a hard-coded Spot Testnet runner plus unused query/cancel helpers. See [architecture and limitations](../architecture/README.md) and the [sequence](../architecture/binance_spot_flow.puml). The constraints below describe the domain contract; the prototype does not enforce all of them.
 
-Provide authenticated access to Binance Spot market data, account state, exchange constraints, and order execution while isolating Binance-specific contracts from the arbitrage policy.
+| Term | Meaning |
+| --- | --- |
+| Symbol | Market identifier, e.g. `BTCUSDT`; base quantity priced in quote units |
+| Bid / ask | Level willing to buy / sell the base asset |
+| Depth snapshot | Bid/ask levels associated with an exchange update ID |
+| Free / locked balance | Available inventory / inventory reserved by orders |
+| Exchange filter | Tick size, quantity step, minimum quantity/notional constraint |
+| LIMIT FOK | Limit order that fills completely and immediately or expires without a fill |
+| Client order ID | Caller-controlled correlation key for submission and reconciliation |
+| Unknown order state | Outcome requiring reconciliation before retry or replacement |
 
-## Ubiquitous Language
+| Domain constraint | Meaning |
+| --- | --- |
+| Precision | Decimal prices/quantities conform to symbol filters; quantity fits free balance and risk limits |
+| Snapshot validity | Preserve exchange update ID and receipt time; reject malformed/incomplete or stale data |
+| Side effects | Stable client IDs, typed outcomes, and reconciliation; transport failure after submission leaves state unknown |
+| Error semantics | Keep rate limits, exchange rejection codes, parsing, and validation failures distinguishable |
+| Security | External credentials, redacted logs, explicit separation of testnet/production |
+| Adapter boundary | Convert payloads into validated results; preserve order/request IDs, status, quantities, and timing |
 
-- **Symbol**: Binance identifier for a market, such as `SOLUSDT` or `BTCUSDT`.
-- **Base asset**: asset whose quantity is bought or sold.
-- **Quote asset**: asset used to express the price and notional value.
-- **Bid**: order-book level at which the market is willing to buy the base asset.
-- **Ask**: order-book level at which the market is willing to sell the base asset.
-- **Depth snapshot**: ordered bid and ask levels associated with an exchange update identifier.
-- **Free balance**: account inventory available for a new order.
-- **Locked balance**: account inventory reserved by open orders.
-- **Exchange filter**: symbol rule governing price tick, quantity step, minimum quantity, or minimum notional.
-- **LIMIT FOK order**: limit order that must fill completely and immediately or be canceled.
-- **Client order ID**: caller-controlled identifier used to correlate submission, status, and recovery.
-- **Unknown order state**: submission outcome that cannot be classified as accepted, rejected, filled, or canceled without reconciliation.
-
-## Responsibilities
-
-- Authenticate signed Binance Spot requests.
-- Retrieve account permissions and balances.
-- Retrieve market metadata and order-book snapshots.
-- Validate prices, quantities, and notionals against symbol filters.
-- Submit, query, and cancel orders.
-- Convert Binance payloads and errors into typed integration results.
-- Preserve request and order identifiers required for reconciliation.
-
-## Boundary
-
-The integration does not decide whether an arbitrage opportunity is profitable, choose inventory targets, coordinate the Jupiter leg, or define portfolio-level risk. It supplies validated market, balance, and execution information to those higher-level policies.
-
-## Invariants
-
-- Testnet and production endpoints and credentials must be explicitly separated.
-- Credentials must remain outside source code and logs.
-- Prices and quantities must use decimal types and conform to current symbol filters.
-- A depth snapshot must include its exchange update identifier and local receipt time.
-- Available quantity must not exceed free balance or configured risk limits.
-- State-changing requests must use stable client identifiers before retry behavior is introduced.
-- Transport failure after submission must produce an unknown state until the order is reconciled.
-- Rate limits and exchange error codes must remain distinguishable from parsing and validation failures.
-
-## Outstanding Decisions
-
-- Define the first common Binance symbol used by the arbitrage strategy.
-- Define account and market-data refresh cadence.
-- Define client order ID format and order reconciliation policy.
-- Define behavior for partial fills, filter changes, rate limits, and unknown order state.
-- Define the boundary between exchange balances and normalized portfolio inventory.
+Open symbol, refresh, model, and recovery choices are tracked in [INBOX](../../INBOX.md).

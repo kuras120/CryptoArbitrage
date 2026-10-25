@@ -1,39 +1,58 @@
 @startuml BinanceSpotFlow
-title Current Binance Spot Testnet flow
-
+title Binance Spot Testnet: request ownership and side effects
 skinparam monochrome true
-skinparam defaultFontName Courier
 skinparam shadowing false
-
-actor "Runtime" as Runtime
-participant "Binance module" as Binance
-participant "Spot Testnet REST API" as API
-participant "Account" as Account
-participant "Order Book" as Book
-participant "Matching Engine" as Engine
-
-Runtime -> Binance : run()
-Binance -> API : Signed GET account
-API -> Account : Load permissions and balances
-Account --> API : Account state
-API --> Binance : Account response
-
-alt transport, body, or parsing failure
-  Binance -> Runtime : Log contextual error and stop
-else valid account and can_trade
-  Binance -> Binance : Deserialize AccountInfo
-  Binance -> API : GET depth (BTCUSDT, 100 levels)
-  API -> Book : Load bids and asks
-  Book --> API : Depth snapshot
-  API --> Binance : OrderBook JSON
-  Binance -> Binance : Parse Decimal values\nfilter and select best quote
-  Binance -> API : Signed LIMIT FOK order
-  API -> Engine : Match immediately or cancel
-  Engine --> API : Order result
-  API --> Binance : JSON response
-else valid account but trading disabled
-  Binance -> Binance : Deserialize AccountInfo
-  Binance -> Binance : Log and stop
+hide footbox
+participant "main / Tokio" as Main
+participant "Binance runner" as Binance
+participant "Account helper" as Account
+participant "Spot Testnet API" as API
+Main -> Binance : run() (no execution opt-in)
+Binance -> Binance : Create HMAC credentials and synchronous client
+Binance -> Account : get_account_info(client.clone()).await
+Account -> API : Signed account read
+API --> Account : Account response
+Account -> Account : Read body; deserialize AccountInfo
+alt request, body, or deserialization error
+  Account --> Binance : Err(AccountInfoError with context)
+  Binance --> Main : Log error and return
+else valid account
+  Account -> Account : Log account type, permission, balances
+  Account --> Binance : Ok(AccountInfo)
+  alt can_trade == false
+    Binance --> Main : Log trading disabled and return
+  else can_trade == true
+    Binance -> API : Read BTCUSDT depth (limit 100)
+    API --> Binance : Depth response
+    break depth request or body-read failure
+      Binance --> Main : Panic; no order submitted
+    end
+    Binance -> Binance : Deserialize OrderBook
+    break invalid depth JSON
+      Binance --> Main : Log parse error + raw body; return
+    end
+    Binance -> Binance : Select side; parse its Decimal levels\nfilter threshold / choose best (skip malformed levels)
+    alt eligible level selected for BUY or SELL
+      Binance -> Binance : quantity = min(0.001, selected level quantity)
+      group State-changing request (no dry-run branch)
+        Binance -> API : Signed LIMIT FOK at selected price
+        API --> Binance : Order response (if available)
+      end
+      break order request or body-read failure
+        Binance --> Main : Panic; acceptance unknown
+      end
+      note right of Binance
+        No caller-controlled recovery ID or retry.
+      end note
+      Binance --> Main : Log raw body as executed; return
+      note over Binance, API
+        No status / executedQty validation.
+        Response logging does not prove a fill.
+        A limit price does not select a resting order by ID.
+      end note
+    else no eligible level or unsupported side
+      Binance --> Main : Return without submitting an order
+    end
+  end
 end
-
 @enduml

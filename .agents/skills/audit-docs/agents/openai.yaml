@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documentation Audit"
+  short_description: "Audit, deduplicate, and compact repository docs"
+  default_prompt: "Use $audit-docs to review and compact the repository documentation without losing durable decisions."
