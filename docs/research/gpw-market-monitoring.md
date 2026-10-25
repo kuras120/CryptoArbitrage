@@ -171,9 +171,8 @@ symbols nor grants product usage rights. A fallback polling experiment may use
 symbols.
 
 The experiment is intentionally Python-based even though the production project
-uses Rust. It should remain an isolated learning tool. A production implementation
-would require an approved project proposal and a provider boundary appropriate
-for the Rust application.
+uses Rust. It should remain an isolated learning tool. A Rust implementation would need a provider boundary appropriate for the
+application. The feed feasibility follow-up is tracked in [INBOX](../../INBOX.md).
 
 ## Risks And Data Quality Controls
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documentation"
+  short_description: "Keep durable documentation aligned with code"
+  default_prompt: "Use $maintain-docs to update project documentation from implemented behavior."

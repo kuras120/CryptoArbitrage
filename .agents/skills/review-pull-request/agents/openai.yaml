@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pull Request Review"
+  short_description: "Review pull requests and recommend corrections"
+  default_prompt: "Use $review-pull-request to assess a pull request and recommend a bounded corrective batch."

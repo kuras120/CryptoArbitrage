@@ -1,55 +1,26 @@
 # Jupiter Integration Domain
 
-This document defines the language, responsibilities, and invariants of the Jupiter integration on Solana.
+Owns Jupiter/Solana transport, mint and amount semantics, routes, and future transaction execution. Profitability, inventory targets, and cross-venue coordination belong to the [arbitrage domain](arbitrage-domain.md).
 
-## Purpose
+Current support is a quote-only Swap V1 prototype, disabled in main. See [architecture](../architecture/README.md) and the [quote workflow table](../architecture/README.md#jupiter-quote-workflow). Transaction responsibilities below are intended boundaries, not implemented support.
 
-Provide access to Jupiter-routed Solana liquidity, quote metadata, and eventually transaction execution while isolating Jupiter and Solana contracts from the arbitrage policy.
+| Term | Meaning |
+| --- | --- |
+| Mint / token decimals | Token address / scale converting human amounts to integer base units |
+| Input / output amount | Quantity offered / expected from the route, in base units |
+| Other amount threshold | Minimum output or maximum input after slippage policy |
+| Quote / route plan | Time-sensitive route for a mint pair, amount, and mode / AMM steps and allocation |
+| Price impact / slippage bps | Estimated price effect / allowed execution deviation |
+| Priority fee / blockhash | Scheduling fee / recent value limiting transaction validity |
+| Signature / confirmation | Transaction identifier / processed, confirmed, finalized, failed, expired, or unknown outcome |
 
-## Ubiquitous Language
+| Domain constraint | Meaning |
+| --- | --- |
+| Amount validation | Validate mint, amount, and direction. Resolve decimals from trusted configuration or on-chain metadata; convert at one boundary and test rounding. API/transaction amounts use integer base units. |
+| Quote validity | Preserve receipt time; enforce maximum age; expose route/network fees, price impact, and thresholds |
+| Future execution | Build, sign, simulate, submit, and confirm; transactions must use a fresh blockhash and pass simulation before live submission. Preserve signature, confirmation state, and request IDs. |
+| Unknown outcomes | Reconcile signature and balances after timeout; distinguish quote retries from transaction retries |
+| Security | Keep wallet keys and signed transactions outside Git and logs |
+| Adapter boundary | Return typed quote/execution results and distinguish Jupiter, RPC, and Solana failures |
 
-- **Mint**: Solana address identifying a fungible token.
-- **Token decimals**: scale used to convert human-readable token quantities into integer base units.
-- **Input amount**: exact token quantity offered to a route, expressed in base units.
-- **Output amount**: quantity expected from the selected route, expressed in base units.
-- **Other amount threshold**: minimum acceptable output or maximum acceptable input after slippage policy.
-- **Quote**: time-sensitive route proposal for a specific mint pair, amount, and swap mode.
-- **Route plan**: one or more AMM steps and allocation percentages selected by Jupiter.
-- **Price impact**: estimated effect of the swap on execution price.
-- **Slippage basis points**: allowed deviation between quoted and executed amounts.
-- **Priority fee**: Solana fee used to improve transaction scheduling.
-- **Blockhash**: recent Solana value limiting transaction validity.
-- **Signature**: identifier of a submitted Solana transaction.
-- **Confirmation state**: processed, confirmed, finalized, failed, expired, or unknown transaction outcome.
-
-## Responsibilities
-
-- Validate mint addresses, token decimals, amount, and swap direction.
-- Request and deserialize Jupiter quotes.
-- Expose route fees, price impact, thresholds, and quote timing as typed values.
-- Build, simulate, sign, submit, and confirm swap transactions when execution is implemented.
-- Convert Jupiter, RPC, and Solana failures into typed integration results.
-- Preserve request IDs, signatures, and confirmation state required for reconciliation.
-
-## Boundary
-
-The integration does not decide whether a cross-venue spread is profitable, choose inventory targets, coordinate the Binance leg, or define portfolio-level risk. It provides validated quote and execution information to those higher-level policies.
-
-## Invariants
-
-- Token amounts must use integer base units at API and transaction boundaries.
-- Mint decimals must come from trusted configuration or on-chain metadata and be validated before conversion.
-- Quotes must include a local receipt time and be rejected after the configured maximum age.
-- Route fees, network fees, price impact, and slippage threshold must remain visible to opportunity evaluation.
-- Wallet keys and signed transactions must never be committed or logged.
-- Transactions must use a fresh blockhash and pass simulation before live submission.
-- A timed-out submission must remain unknown until signature and balance reconciliation complete.
-- Retrying quote requests must be separated from retrying transaction submission.
-
-## Outstanding Decisions
-
-- Confirm the Jupiter API flow and authentication model used for execution.
-- Define trusted token metadata and decimal resolution.
-- Define quote freshness, slippage, price-impact, and route-selection limits.
-- Define Solana RPC provider, commitment level, priority-fee policy, and confirmation timeout.
-- Define transaction reconciliation and recovery after an unknown result.
+Open API, metadata, RPC, risk-limit, and recovery choices are tracked in [INBOX](../../INBOX.md).
